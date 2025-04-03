@@ -1,0 +1,1 @@
+"""Search module for document retrieval and search functionality.""" 
