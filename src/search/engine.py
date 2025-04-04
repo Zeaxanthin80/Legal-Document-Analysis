@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 from langchain.schema import Document
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import re
 import logging

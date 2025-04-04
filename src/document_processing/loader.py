@@ -6,6 +6,7 @@ import docx
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import logging
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,17 +28,33 @@ class DocumentLoader:
             length_function=len,
         )
     
+    def _preprocess_text(self, text: str) -> str:
+        """Clean and preprocess the raw text content."""
+        # Convert to lowercase
+        text = text.lower()
+
+        # Replace all whitespace sequences (space, tab, newline etc.) with a single space
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        # Optional: Remove specific unwanted characters (example)
+        # text = re.sub(r'[^a-z0-9\s.,;:\'\"!?-]', '', text)
+
+        return text
+
     def load_pdf(self, file_path: str) -> List[Document]:
         """Load and process a PDF document."""
         try:
             with open(file_path, 'rb') as file:
                 pdf_reader = pypdf.PdfReader(file)
-                text = ""
+                raw_text = ""
                 for page in pdf_reader.pages:
-                    text += page.extract_text()
-                
+                    raw_text += page.extract_text() or "" # Add check for None
+
+                # Preprocess the text
+                processed_text = self._preprocess_text(raw_text)
+
                 # Split text into chunks
-                chunks = self.text_splitter.split_text(text)
+                chunks = self.text_splitter.split_text(processed_text)
                 
                 # Create Document objects
                 documents = [
@@ -56,8 +73,12 @@ class DocumentLoader:
         """Load and process a text document."""
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
-                text = file.read()
-                chunks = self.text_splitter.split_text(text)
+                raw_text = file.read()
+
+                # Preprocess the text
+                processed_text = self._preprocess_text(raw_text)
+
+                chunks = self.text_splitter.split_text(processed_text)
                 documents = [
                     Document(
                         page_content=chunk,
@@ -75,8 +96,12 @@ class DocumentLoader:
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 soup = BeautifulSoup(file, 'html.parser')
-                text = soup.get_text()
-                chunks = self.text_splitter.split_text(text)
+                raw_text = soup.get_text()
+
+                # Preprocess the text
+                processed_text = self._preprocess_text(raw_text)
+
+                chunks = self.text_splitter.split_text(processed_text)
                 documents = [
                     Document(
                         page_content=chunk,
@@ -93,8 +118,12 @@ class DocumentLoader:
         """Load and process a Word document."""
         try:
             doc = docx.Document(file_path)
-            text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-            chunks = self.text_splitter.split_text(text)
+            raw_text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+
+            # Preprocess the text
+            processed_text = self._preprocess_text(raw_text)
+
+            chunks = self.text_splitter.split_text(processed_text)
             documents = [
                 Document(
                     page_content=chunk,

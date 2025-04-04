@@ -1,11 +1,13 @@
 from typing import List, Dict, Any, Optional
 from langchain.schema import Document
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from langchain.chains import LLMChain
+# LLMChain is deprecated, we'll use LCEL (prompt | llm)
+# from langchain.chains import LLMChain 
 import spacy
 import logging
 from collections import Counter
+import json # Import json module
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,14 +27,27 @@ class LegalClassifier:
         
         # Define classification prompt
         self.classification_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a legal document classifier. Analyze the following text and classify it into relevant legal categories."),
+            ("system", "You are a legal document classifier. Analyze the following text and classify it into relevant legal categories. Respond with the classification only."),
             ("human", "{text}")
         ])
+        # self.classification_chain = LLMChain(...) # Deprecated
+        self.classification_chain = self.classification_prompt | self.llm
         
-        self.classification_chain = LLMChain(
-            llm=self.llm,
-            prompt=self.classification_prompt
-        )
+        # Define topic analysis prompt
+        self.topic_prompt = ChatPromptTemplate.from_messages([
+            ("system", "Analyze the following legal text and identify the main legal topics. Return ONLY a valid JSON object (no other text) with a single key 'topics' mapping to a dictionary of topic names and their relevance scores (0-1)."),
+            ("human", "{text}")
+        ])
+        # topic_chain = LLMChain(...) # Deprecated
+        self.topic_chain = self.topic_prompt | self.llm
+        
+        # Define summarization prompt
+        self.summary_prompt = ChatPromptTemplate.from_messages([
+            ("system", "Summarize the following legal document, focusing on key points and legal implications."),
+            ("human", "{text}")
+        ])
+        # summary_chain = LLMChain(...) # Deprecated
+        self.summary_chain = self.summary_prompt | self.llm
         
     def classify_document(self, document: Document) -> Dict[str, Any]:
         """
@@ -45,8 +60,10 @@ class LegalClassifier:
             Dict[str, Any]: Classification results
         """
         try:
-            # Get classification from LLM
-            classification = self.classification_chain.run(text=document.page_content)
+            # Get classification from LLM using .invoke()
+            # result = self.classification_chain.run(text=document.page_content) # Deprecated
+            result = self.classification_chain.invoke({"text": document.page_content})
+            classification = result.content # Assuming result is an AIMessage
             
             # Extract entities using spaCy
             doc = self.nlp(document.page_content)
@@ -101,19 +118,27 @@ class LegalClassifier:
             document (Document): Document to analyze
             
         Returns:
-            Dict[str, float]: Topic scores
+            Dict[str, float]: Topic scores dictionary, or empty dict on error.
         """
         try:
-            # Define topic analysis prompt
-            topic_prompt = ChatPromptTemplate.from_messages([
-                ("system", "Analyze the following legal text and identify the main legal topics. Return a JSON object with topics and their relevance scores (0-1)."),
-                ("human", "{text}")
-            ])
+            # result = topic_chain.run(text=document.page_content) # Deprecated
+            result = self.topic_chain.invoke({"text": document.page_content})
+            json_string = result.content # Assuming result is an AIMessage
             
-            topic_chain = LLMChain(llm=self.llm, prompt=topic_prompt)
-            topics = topic_chain.run(text=document.page_content)
+            # Parse the JSON string output from LLM
+            try:
+                topics_data = json.loads(json_string)
+                # Validate structure slightly
+                if isinstance(topics_data, dict) and 'topics' in topics_data and isinstance(topics_data['topics'], dict):
+                    return topics_data['topics'] # Return the inner dictionary
+                else:
+                    logger.warning(f"LLM returned unexpected JSON structure: {json_string}")
+                    return {}
+            except json.JSONDecodeError as json_e:
+                logger.error(f"Failed to decode JSON from LLM: {json_e}")
+                logger.error(f"LLM output was: {json_string}")
+                return {}
             
-            return topics
         except Exception as e:
             logger.error(f"Error analyzing topics: {str(e)}")
             return {}
@@ -129,14 +154,9 @@ class LegalClassifier:
             str: Document summary
         """
         try:
-            # Define summarization prompt
-            summary_prompt = ChatPromptTemplate.from_messages([
-                ("system", "Summarize the following legal document, focusing on key points and legal implications."),
-                ("human", "{text}")
-            ])
-            
-            summary_chain = LLMChain(llm=self.llm, prompt=summary_prompt)
-            summary = summary_chain.run(text=document.page_content)
+            # result = summary_chain.run(text=document.page_content) # Deprecated
+            result = self.summary_chain.invoke({"text": document.page_content})
+            summary = result.content # Assuming result is an AIMessage
             
             return summary
         except Exception as e:
@@ -155,11 +175,17 @@ class LegalClassifier:
         """
         results = []
         for doc in documents:
+            # Get the full classification result dictionary
+            classification_result = self.classify_document(doc)
+            # Get the topics dictionary directly
+            topics_dict = self.analyze_legal_topics(doc)
+            
             analysis = {
-                "classification": self.classify_document(doc),
-                "entities": self.extract_legal_entities(doc),
-                "topics": self.analyze_legal_topics(doc),
+                # classification_result already contains metadata, entities etc.
+                "classification_data": classification_result, 
+                "topics": topics_dict, # Use the parsed dictionary
                 "summary": self.summarize_document(doc)
+                # No need to call extract_legal_entities separately if included in classify_document
             }
             results.append(analysis)
         return results 
