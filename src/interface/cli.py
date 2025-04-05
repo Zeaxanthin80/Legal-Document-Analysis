@@ -55,17 +55,33 @@ class LegalAnalysisCLI:
             
         self._display_results(results)
         
-    def analyze_documents(self, directory: str) -> None:
-        """Analyze documents in a directory."""
-        print(f"Analyzing documents in {directory}...")
+    def analyze_documents(self, directory: str, limit: int = 5) -> None:
+        """Analyze documents in a directory (first few by default)."""
+        print(f"Loading documents from {directory} for analysis...")
         documents = self.loader.load_documents(directory)
-        results = self.classifier.analyze_documents(documents)
+        
+        if not documents:
+            print("No documents found to analyze.")
+            return
+
+        # Limit the number of documents to analyze
+        docs_to_analyze = documents[:limit]
+        print(f"Analyzing the first {len(docs_to_analyze)} document chunks (out of {len(documents)} total)... This may take a while.")
+        
+        # Analyze the limited subset
+        results = self.classifier.analyze_documents(docs_to_analyze)
         
         # Save results to file
         output_file = Path(directory) / "analysis_results.json"
-        with open(output_file, "w") as f:
-            json.dump(results, f, indent=2)
-        print(f"Analysis results saved to {output_file}")
+        # Ensure parent directory exists (useful if directory is like data/raw)
+        output_file.parent.mkdir(parents=True, exist_ok=True) 
+        try:
+            with open(output_file, "w", encoding='utf-8') as f:
+                # Ensure JSON can handle potential non-serializable data gracefully
+                json.dump(results, f, indent=2, default=str, ensure_ascii=False)
+            print(f"Analysis results for the first {len(docs_to_analyze)} chunks saved to {output_file}")
+        except Exception as e:
+            print(f"Error saving analysis results to {output_file}: {e}")
         
     def _display_results(self, results: List[Any]) -> None:
         """Display search results."""
@@ -116,21 +132,22 @@ def main():
     # Analyze documents command
     analyze_parser = subparsers.add_parser("analyze", help="Analyze documents in a directory (loads them fresh, does not use index)")
     analyze_parser.add_argument("directory", help="Directory containing documents")
+    # Add optional limit argument
+    analyze_parser.add_argument("--limit", type=int, default=5, 
+                              help="Limit the number of document chunks to analyze (default: 5)")
     
     args = parser.parse_args()
         
-    # Instantiate CLI *after* parsing args, so index loading happens once.
     cli = LegalAnalysisCLI()
     
-    # No longer need the note about running load first for semantic search
-    # Keyword/Regex search still have limitations as noted in SearchEngine
     if args.command == "load":
         cli.load_documents(args.directory)
     elif args.command == "search":
         filters = parse_filters(args.filter or []) 
         cli.search_documents(args.query, args.type, filters)
     elif args.command == "analyze":
-        cli.analyze_documents(args.directory)
+        # Pass the limit to the analyze_documents method
+        cli.analyze_documents(args.directory, args.limit)
         
 if __name__ == "__main__":
     main() 

@@ -8,6 +8,8 @@ import spacy
 import logging
 from collections import Counter
 import json # Import json module
+# Import the output parser
+from langchain_core.output_parsers import JsonOutputParser
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,31 +24,58 @@ class LegalClassifier:
         Args:
             model_name (str): Name of the OpenAI model to use
         """
-        self.llm = ChatOpenAI(model_name=model_name)
+        self.llm = ChatOpenAI(model_name=model_name, temperature=0)
         self.nlp = spacy.load("en_core_web_sm")
         
-        # Define classification prompt
+        # Instantiate the output parser
+        self.json_parser = JsonOutputParser()
+        
+        # --- Refined Prompts --- 
+
+        # Classification Prompt (more specific instructions)
+        classification_system_message = (
+            "You are an expert legal assistant specializing in Florida Statutes. "
+            "Your task is to classify the provided legal text snippet into one or more relevant categories. "
+            "Focus on the primary legal subject matter. Examples of categories include: "
+            "Juvenile Justice, Family Law, Tort Law, Criminal Procedure, Dependency Proceedings, Civil Procedure, Property Law. "
+            "Respond with a comma-separated list of the most relevant categories ONLY. Do not add explanation.\n"
+            "\nExample:\n"
+            "Text: 'The state and its agencies and subdivisions shall be liable for tort claims...'\n"
+            "Response: Tort Law, Sovereign Immunity"
+        )
         self.classification_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a legal document classifier. Analyze the following text and classify it into relevant legal categories. Respond with the classification only."),
-            ("human", "{text}")
+            ("system", classification_system_message),
+            ("human", "Classify the following legal text: \n\n{text}")
         ])
-        # self.classification_chain = LLMChain(...) # Deprecated
         self.classification_chain = self.classification_prompt | self.llm
         
-        # Define topic analysis prompt
-        self.topic_prompt = ChatPromptTemplate.from_messages([
-            ("system", "Analyze the following legal text and identify the main legal topics. Return ONLY a valid JSON object (no other text) with a single key 'topics' mapping to a dictionary of topic names and their relevance scores (0-1)."),
-            ("human", "{text}")
-        ])
-        # topic_chain = LLMChain(...) # Deprecated
-        self.topic_chain = self.topic_prompt | self.llm
+        # Topic Analysis Prompt (using JsonOutputParser instructions)
+        topic_system_message = (
+            "You are an expert legal analyst. Analyze the provided legal text snippet and identify the main legal topics discussed. "
+            "Focus on specific legal concepts or areas mentioned. "
+            "Return ONLY the JSON object containing the topics and their confidence scores (0.0-1.0)."
+            "\n{format_instructions}"
+        )
+        # Create the template first without partial_variables
+        topic_prompt_template = ChatPromptTemplate.from_messages(
+            messages=[
+                ("system", topic_system_message),
+                ("human", "Analyze the topics in the following legal text: \n\n{text}")
+            ]
+            # No partial_variables here
+        )
+        # Apply partial variables using the .partial() method
+        self.topic_prompt = topic_prompt_template.partial(
+            format_instructions=self.json_parser.get_format_instructions()
+        )
+        # Pipe the LLM output through the JSON parser
+        self.topic_chain = self.topic_prompt | self.llm | self.json_parser
         
         # Define summarization prompt
         self.summary_prompt = ChatPromptTemplate.from_messages([
-            ("system", "Summarize the following legal document, focusing on key points and legal implications."),
+            ("system", "Summarize the following legal document snippet concisely, focusing on key legal points, definitions, procedures, or implications."),
             ("human", "{text}")
         ])
-        # summary_chain = LLMChain(...) # Deprecated
         self.summary_chain = self.summary_prompt | self.llm
         
     def classify_document(self, document: Document) -> Dict[str, Any]:
@@ -110,37 +139,43 @@ class LegalClassifier:
             logger.error(f"Error extracting entities: {str(e)}")
             return []
             
-    def analyze_legal_topics(self, document: Document) -> Dict[str, float]:
+    def analyze_legal_topics(self, document: Document) -> Dict[str, Any]: # Return type might be Any if parsing fails
         """
-        Analyze the main legal topics in a document.
+        Analyze the main legal topics in a document using JsonOutputParser.
         
         Args:
             document (Document): Document to analyze
             
         Returns:
-            Dict[str, float]: Topic scores dictionary, or empty dict on error.
+            Dict[str, Any]: Parsed topic dictionary, or empty dict on error.
         """
         try:
-            # result = topic_chain.run(text=document.page_content) # Deprecated
-            result = self.topic_chain.invoke({"text": document.page_content})
-            json_string = result.content # Assuming result is an AIMessage
+            # Invoke the chain - the parser handles JSON validation/parsing
+            parsed_output = self.topic_chain.invoke({"text": document.page_content})
             
-            # Parse the JSON string output from LLM
-            try:
-                topics_data = json.loads(json_string)
-                # Validate structure slightly
-                if isinstance(topics_data, dict) and 'topics' in topics_data and isinstance(topics_data['topics'], dict):
-                    return topics_data['topics'] # Return the inner dictionary
-                else:
-                    logger.warning(f"LLM returned unexpected JSON structure: {json_string}")
-                    return {}
-            except json.JSONDecodeError as json_e:
-                logger.error(f"Failed to decode JSON from LLM: {json_e}")
-                logger.error(f"LLM output was: {json_string}")
-                return {}
-            
+            # The JsonOutputParser should return a dict directly if successful
+            # We might still want basic structure validation depending on strictness needed
+            if isinstance(parsed_output, dict):
+                 # We might need to adapt this if the parser expects a specific structure
+                 # For now, let's assume it returns {"topics": {...}} as requested in the old prompt
+                 # If JsonOutputParser just returns the direct dict, we adapt.
+                 # Let's assume for now it returns the structure we want directly.
+                 # Check the actual output format if this fails. 
+                 # return parsed_output.get("topics", {}) 
+                 return parsed_output # Return the parsed dict directly
+            else:
+                 logger.warning(f"JsonOutputParser returned non-dict type: {type(parsed_output)}")
+                 return {}
+                 
         except Exception as e:
-            logger.error(f"Error analyzing topics: {str(e)}")
+            # Errors could be from LLM call OR from the JsonOutputParser failing
+            logger.error(f"Error analyzing topics (potentially parsing error): {str(e)}")
+            # Attempting to log the raw output might fail if the error was before LLM call
+            # try:
+            #     raw_llm_output = (self.topic_prompt | self.llm).invoke({"text": document.page_content})
+            #     logger.error(f"Raw LLM output before parsing failure: {raw_llm_output.content}")
+            # except Exception as inner_e:
+            #     logger.error(f"Could not retrieve raw LLM output: {inner_e}")
             return {}
             
     def summarize_document(self, document: Document) -> str:

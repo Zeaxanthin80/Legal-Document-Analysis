@@ -1,0 +1,751 @@
+[
+  {
+    "classification_data": {
+      "classification": "Dependency Proceedings, Juvenile Justice, Family Law",
+      "entities": [
+        [
+          "chapter 39",
+          "LAW"
+        ],
+        [
+          "florida",
+          "GPE"
+        ],
+        [
+          "icpc",
+          "ORG"
+        ],
+        [
+          "july 1",
+          "DATE"
+        ],
+        [
+          "2022",
+          "DATE"
+        ],
+        [
+          "october 1, 2022",
+          "DATE"
+        ],
+        [
+          "39.001",
+          "CARDINAL"
+        ],
+        [
+          "1 39.0014",
+          "CARDINAL"
+        ],
+        [
+          "9 39.00145",
+          "CARDINAL"
+        ],
+        [
+          "9 39.00146",
+          "CARDINAL"
+        ],
+        [
+          "10",
+          "CARDINAL"
+        ],
+        [
+          "39.0016",
+          "CARDINAL"
+        ],
+        [
+          "neg",
+          "PERSON"
+        ],
+        [
+          "12 39.01",
+          "CARDINAL"
+        ],
+        [
+          "16 39.011",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "LAW": 1,
+        "GPE": 1,
+        "ORG": 1,
+        "DATE": 3,
+        "CARDINAL": 8,
+        "PERSON": 1
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "Florida Statutes": 0.9,
+        "Dependency": 0.8,
+        "Quality Parenting": 0.7,
+        "Independent Living": 0.6,
+        "ICPC Articles and Regulations": 0.7,
+        "Paternity": 0.5,
+        "Adoption": 0.6,
+        "Rules of Juvenile Procedure": 0.8
+      }
+    },
+    "summary": "This legal document outlines Chapter 39 of the Florida Statutes, covering various aspects of child welfare, including normalcy, quality parenting, independent living, ICPC regulations, paternity, adoption, and juvenile procedure rules. It involves collaboration between the Department of Children and Families, Statewide Guardian Ad Litem Office, and Office of the State Courts Administrator. Key sections include personnel standards, responsibilities of public agencies, records management, education of children, and definitions. The effective dates for statutes and rules are specified."
+  },
+  {
+    "classification_data": {
+      "classification": "Dependency Proceedings",
+      "entities": [
+        [
+          "12 39.01",
+          "CARDINAL"
+        ],
+        [
+          "16 39.011",
+          "CARDINAL"
+        ],
+        [
+          "27",
+          "CARDINAL"
+        ],
+        [
+          "28 39.0121",
+          "CARDINAL"
+        ],
+        [
+          "28",
+          "CARDINAL"
+        ],
+        [
+          "29",
+          "CARDINAL"
+        ],
+        [
+          "31",
+          "CARDINAL"
+        ],
+        [
+          "39.01305",
+          "CARDINAL"
+        ],
+        [
+          "31",
+          "CARDINAL"
+        ],
+        [
+          "39.0131",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 10
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "definitions": 0.9,
+        "immunity from liability": 0.8,
+        "rules for implementation": 0.7,
+        "specific rulemaking authority": 0.6,
+        "procedures and jurisdiction": 0.7,
+        "right to counsel": 0.8,
+        "early childhood court programs": 0.6,
+        "appointment of an attorney": 0.7,
+        "permanent mailing address designation": 0.5
+      }
+    },
+    "summary": "This legal document addresses definitions, immunity from liability, rules for implementation, procedures, jurisdiction, right to counsel, early childhood court programs, appointment of an attorney for dependent children with special needs, and permanent mailing address designation in cases involving abandoned children."
+  },
+  {
+    "classification_data": {
+      "classification": "Family Law, Juvenile Justice",
+      "entities": [
+        [
+          "31",
+          "CARDINAL"
+        ],
+        [
+          "39.0131",
+          "CARDINAL"
+        ],
+        [
+          "33 39.0132",
+          "CARDINAL"
+        ],
+        [
+          "33",
+          "CARDINAL"
+        ],
+        [
+          "39.0133",
+          "CARDINAL"
+        ],
+        [
+          "34 39.0134",
+          "CARDINAL"
+        ],
+        [
+          "35 39.0135",
+          "CARDINAL"
+        ],
+        [
+          "35 39.0136",
+          "CARDINAL"
+        ],
+        [
+          "35 39.0137",
+          "CARDINAL"
+        ],
+        [
+          "36 39.01375",
+          "CARDINAL"
+        ],
+        [
+          "36",
+          "CARDINAL"
+        ],
+        [
+          "39.0138",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 12
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "special needs child": 0.8,
+        "permanent mailing address designation": 0.7,
+        "oaths": 0.6,
+        "confidential information": 0.6,
+        "court fees": 0.7,
+        "appointed counsel": 0.8,
+        "trust fund": 0.6,
+        "time limitations": 0.7,
+        "federal law": 0.7,
+        "best interest determination": 0.8,
+        "criminal history": 0.7
+      }
+    },
+    "summary": "This legal document snippet outlines various sections related to the legal procedures and considerations for children with special needs in the context of court proceedings. It covers topics such as permanent mailing address designation, oaths, records, confidential information, court and witness fees, appointed counsel compensation, operation and maintenance trust fund, time limitations, federal law compliance, best interest determination for placement, and criminal history."
+  },
+  {
+    "classification_data": {
+      "classification": "Family Law, Child Welfare, Criminal Procedure",
+      "entities": [
+        [
+          "36 39.01375",
+          "CARDINAL"
+        ],
+        [
+          "36",
+          "CARDINAL"
+        ],
+        [
+          "39.0138",
+          "CARDINAL"
+        ],
+        [
+          "37",
+          "CARDINAL"
+        ],
+        [
+          "39.0139 visitation",
+          "QUANTITY"
+        ],
+        [
+          "39 39.0141",
+          "CARDINAL"
+        ],
+        [
+          "40 39.0142",
+          "CARDINAL"
+        ],
+        [
+          "40 39",
+          "DATE"
+        ],
+        [
+          "0143",
+          "DATE"
+        ],
+        [
+          "41",
+          "CARDINAL"
+        ],
+        [
+          "39.101",
+          "CARDINAL"
+        ],
+        [
+          "42 39.201",
+          "CARDINAL"
+        ],
+        [
+          "44",
+          "CARDINAL"
+        ],
+        [
+          "39.2015",
+          "CARDINAL"
+        ],
+        [
+          "48 39.202",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 12,
+        "QUANTITY": 1,
+        "DATE": 2
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "federal law": 0.8,
+        "rulemaking authority": 0.7,
+        "best interest determination for placement": 0.6,
+        "criminal history records check": 0.7,
+        "visitation or other contact restrictions": 0.5,
+        "missing children report required": 0.6,
+        "notifying law enforcement officers of parent or caregiver names": 0.6,
+        "reporting child abuse": 0.8,
+        "central abuse hotline": 0.7,
+        "required reports of child abuse, abandonment, or neglect": 0.8,
+        "confidentiality of reports and records": 0.7
+      }
+    },
+    "summary": "This legal document snippet outlines various provisions related to child welfare and protection under federal law. It includes rules on determining the best interest of a child for placement, criminal history checks for placement, visitation restrictions, reporting missing children, notifying law enforcement about parents or caregivers, handling dually-involved children, reporting child abuse to a central hotline, required reports of abuse, abandonment, neglect, and sexual abuse, confidentiality of reports and records, and investigations into sexual abuse reports."
+  },
+  {
+    "classification_data": {
+      "classification": "Child Abuse, Neglect Proceedings, Immunity",
+      "entities": [
+        [
+          "44",
+          "CARDINAL"
+        ],
+        [
+          "39.2015",
+          "CARDINAL"
+        ],
+        [
+          "48 39.202",
+          "CARDINAL"
+        ],
+        [
+          "49",
+          "CARDINAL"
+        ],
+        [
+          "39.2021",
+          "CARDINAL"
+        ],
+        [
+          "54",
+          "CARDINAL"
+        ],
+        [
+          "55 39.203",
+          "CARDINAL"
+        ],
+        [
+          "55",
+          "CARDINAL"
+        ],
+        [
+          "39.204",
+          "MONEY"
+        ],
+        [
+          "56 39.205",
+          "CARDINAL"
+        ],
+        [
+          "56",
+          "CARDINAL"
+        ],
+        [
+          "39.206",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 11,
+        "MONEY": 1
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "sexual abuse": 0.9,
+        "confidentiality": 0.8,
+        "immunity from liability": 0.7,
+        "privileged communications": 0.6,
+        "penalties": 0.7
+      }
+    },
+    "summary": "The document addresses issues related to inappropriate sexual behavior, critical incident response teams for sexual abuse reports, confidentiality of reports and records in cases of child abuse, release of confidential information, public disclosure of reported child deaths, immunity from liability in cases of child abuse, abrogation of privileged communications in cases of child abuse, penalties for failure to report child abuse, and administrative fines for false reports."
+  },
+  {
+    "classification_data": {
+      "classification": "Family Law, Child Protection, Civil Procedure",
+      "entities": [
+        [
+          "39.205",
+          "CARDINAL"
+        ],
+        [
+          "56",
+          "CARDINAL"
+        ],
+        [
+          "39.206",
+          "CARDINAL"
+        ],
+        [
+          "58 39.208",
+          "CARDINAL"
+        ],
+        [
+          "59",
+          "CARDINAL"
+        ],
+        [
+          "39.301",
+          "CARDINAL"
+        ],
+        [
+          "62",
+          "CARDINAL"
+        ],
+        [
+          "39.302",
+          "CARDINAL"
+        ],
+        [
+          "69 39.303",
+          "CARDINAL"
+        ],
+        [
+          "71",
+          "CARDINAL"
+        ],
+        [
+          "39.3031",
+          "CARDINAL"
+        ],
+        [
+          "39.303",
+          "CARDINAL"
+        ],
+        [
+          "39.305",
+          "CARDINAL"
+        ],
+        [
+          "75",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 14
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "child abuse": 0.9,
+        "neglect": 0.8,
+        "administrative fines": 0.6,
+        "civil damages": 0.6,
+        "protective investigations": 0.7,
+        "institutional child abuse": 0.6,
+        "sexual abuse": 0.7
+      }
+    },
+    "summary": "The legal document outlines penalties for failing to report child abuse, abandonment, or neglect, as well as administrative fines for false reports. It also addresses cross-reporting of child abuse and animal cruelty. Additionally, it details procedures for initiating protective investigations, investigating institutional child abuse, and providing services for child protection and sexual abuse cases. Rules for implementing these provisions are also included."
+  },
+  {
+    "classification_data": {
+      "classification": "Dependency Proceedings",
+      "entities": [
+        [
+          "39.3031",
+          "CARDINAL"
+        ],
+        [
+          "39.303",
+          "CARDINAL"
+        ],
+        [
+          "39.305",
+          "CARDINAL"
+        ],
+        [
+          "75",
+          "CARDINAL"
+        ],
+        [
+          "75 39.3035",
+          "CARDINAL"
+        ],
+        [
+          "75",
+          "CARDINAL"
+        ],
+        [
+          "39.304",
+          "CARDINAL"
+        ],
+        [
+          "77 39.306",
+          "CARDINAL"
+        ],
+        [
+          "78 39.3065",
+          "CARDINAL"
+        ],
+        [
+          "78 39.3068",
+          "CARDINAL"
+        ],
+        [
+          "medica l",
+          "ORG"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 10,
+        "ORG": 1
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "Child Advocacy Centers": 0.8,
+        "Child Protective Investigations": 0.7,
+        "Memorandum of Agreement": 0.6,
+        "State Funding": 0.5,
+        "Medical Treatment of Abused Children": 0.4
+      }
+    },
+    "summary": "This legal document snippet outlines rules for implementing child protection laws, including procedures for child advocacy centers, medical examinations, and investigations. It also addresses working agreements with law enforcement and funding for investigative services provided by sheriffs in certain counties."
+  },
+  {
+    "classification_data": {
+      "classification": "Dependency Proceedings, Child Protective Services",
+      "entities": [
+        [
+          "78 39.3068",
+          "CARDINAL"
+        ],
+        [
+          "medica l",
+          "ORG"
+        ],
+        [
+          "80 39.307",
+          "CARDINAL"
+        ],
+        [
+          "81",
+          "CARDINAL"
+        ],
+        [
+          "83",
+          "CARDINAL"
+        ],
+        [
+          "39.395",
+          "CARDINAL"
+        ],
+        [
+          "84 39.401",
+          "CARDINAL"
+        ],
+        [
+          "84 39.4015",
+          "CARDINAL"
+        ],
+        [
+          "86",
+          "CARDINAL"
+        ],
+        [
+          "39.402",
+          "MONEY"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 8,
+        "ORG": 1,
+        "MONEY": 1
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "child protective investigative services": 0.9,
+      "child-on-child sexual abuse": 0.8,
+      "taking children into custody": 0.7,
+      "shelter hearings": 0.6
+    },
+    "summary": "This legal document outlines procedures and guidelines related to child protective investigative services, reports of medical neglect, child-on-child sexual abuse, taking children into custody, and shelter hearings. It includes provisions for detaining children, taking dependent children into custody, family findings, and placement in shelters."
+  },
+  {
+    "classification_data": {
+      "classification": "Family Law, Child Welfare",
+      "entities": [
+        [
+          "84 39.4015",
+          "CARDINAL"
+        ],
+        [
+          "86",
+          "CARDINAL"
+        ],
+        [
+          "39.402",
+          "MONEY"
+        ],
+        [
+          "87 39.4021",
+          "CARDINAL"
+        ],
+        [
+          "93 39.4022",
+          "CARDINAL"
+        ],
+        [
+          "93 39.40225",
+          "CARDINAL"
+        ],
+        [
+          "97 39.4023",
+          "CARDINAL"
+        ],
+        [
+          "98 39.4024",
+          "CARDINAL"
+        ],
+        [
+          "102",
+          "CARDINAL"
+        ],
+        [
+          "39.407",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 9,
+        "MONEY": 1
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "family findings": 0.8,
+        "placement in a shelter": 0.7,
+        "priority placement for out-of-home placements": 0.6,
+        "multidisciplinary teams": 0.5,
+        "assessment": 0.4,
+        "contracts for development of model placement transition plans": 0.6,
+        "placement and education transitions": 0.5,
+        "placement of siblings": 0.6,
+        "visitation": 0.4,
+        "medical examination": 0.7,
+        "psychiatric examination": 0.6,
+        "psychological examination": 0.6,
+        "treatment of child": 0.7,
+        "substance abuse examination": 0.6,
+        "child custody": 0.6
+      }
+    },
+    "summary": "This legal document addresses various aspects of child welfare, including family findings, shelter placement, priority placement, multidisciplinary teams, transition plans, sibling placement, visitation, and medical/psychological examinations for children in custody or seeking custody."
+  },
+  {
+    "classification_data": {
+      "classification": "Dependency Proceedings",
+      "entities": [
+        [
+          "39.407",
+          "CARDINAL"
+        ],
+        [
+          "106 39.4075",
+          "CARDINAL"
+        ],
+        [
+          "113 39.4085",
+          "CARDINAL"
+        ],
+        [
+          "114 39.4087",
+          "CARDINAL"
+        ],
+        [
+          "115 39.4091",
+          "CARDINAL"
+        ],
+        [
+          "117 39.4092",
+          "CARDINAL"
+        ],
+        [
+          "118",
+          "CARDINAL"
+        ],
+        [
+          "39.501",
+          "CARDINAL"
+        ]
+      ],
+      "entity_counts": {
+        "CARDINAL": 8
+      },
+      "metadata": {
+        "source": "data\\raw\\Chapter 39 2022-10-24.pdf",
+        "type": "pdf"
+      }
+    },
+    "topics": {
+      "topics": {
+        "child custody": 0.9,
+        "dependency case": 0.8,
+        "mediation": 0.7,
+        "legal representation": 0.6,
+        "dispute resolution": 0.6,
+        "adjudication": 0.4
+      }
+    },
+    "summary": "This legal document snippet outlines various sections related to child welfare and dependency cases. It covers topics such as medical examinations, referral to mediation, goals for dependent children, caregiver requirements, participation in childhood activities, and a legal representation model program. Additionally, it mentions procedures for petitioning for dependency cases."
+  }
+]
