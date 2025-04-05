@@ -32,6 +32,23 @@ def sample_document(expected_processed_text):
     )
 
 @pytest.fixture
+def sample_document_pdf():
+    """Create a second sample document with different metadata.""" 
+    # Using slightly different content for variety
+    content = "florida statute chapter 39 - proceedings relating to children this chapter shall be known as the unified juvenile justice act."
+    return Document(
+        page_content=content,
+        metadata={"source": "test.pdf", "type": "pdf", "chapter": 39}
+    )
+
+@pytest.fixture
+def search_engine_with_docs(sample_document, sample_document_pdf):
+    """Create a SearchEngine instance and add both sample documents."""
+    engine = SearchEngine()
+    engine.add_documents([sample_document, sample_document_pdf])
+    return engine
+
+@pytest.fixture
 def document_loader():
     """Create a DocumentLoader instance."""
     return DocumentLoader()
@@ -116,4 +133,65 @@ def test_legal_classifier_summarize_document(legal_classifier, sample_document):
     """Test document summarization."""
     summary = legal_classifier.summarize_document(sample_document)
     assert isinstance(summary, str)
-    assert len(summary) > 0 
+    assert len(summary) > 0
+
+# --- Tests for Metadata Filtering --- 
+
+def test_search_engine_semantic_search_with_filter(search_engine_with_docs):
+    """Test semantic search with metadata filtering."""
+    # Filter for only PDF documents
+    pdf_filter = {"type": "pdf"}
+    results = search_engine_with_docs.semantic_search("juvenile justice", filter=pdf_filter)
+    assert len(results) == 1, "Should only find the PDF document"
+    assert results[0].metadata["type"] == "pdf"
+    assert "juvenile justice" in results[0].page_content
+
+    # Filter for only TXT documents
+    txt_filter = {"type": "txt"}
+    results = search_engine_with_docs.semantic_search("sovereign immunity", filter=txt_filter)
+    assert len(results) == 1, "Should only find the TXT document"
+    assert results[0].metadata["type"] == "txt"
+    assert "sovereign immunity" in results[0].page_content
+
+    # Filter for non-existent metadata
+    non_existent_filter = {"category": "case_law"}
+    results = search_engine_with_docs.semantic_search("tort claims", filter=non_existent_filter)
+    assert len(results) == 0, "Should find no documents with this metadata"
+
+def test_search_engine_keyword_search_with_filter(search_engine_with_docs):
+    """Test keyword search with metadata filtering."""
+    # Filter for only PDF documents
+    pdf_filter = {"type": "pdf"}
+    results = search_engine_with_docs.keyword_search("chapter 39", filter=pdf_filter)
+    assert len(results) == 1, "Should only find the PDF document"
+    assert results[0].metadata["type"] == "pdf"
+
+    # Filter for only TXT documents
+    txt_filter = {"type": "txt"}
+    results = search_engine_with_docs.keyword_search("agencies", filter=txt_filter)
+    assert len(results) == 1, "Should only find the TXT document"
+    assert results[0].metadata["type"] == "txt"
+
+    # Filter that excludes all matching content
+    pdf_filter_wrong_content = {"type": "pdf"}
+    results = search_engine_with_docs.keyword_search("sovereign immunity", filter=pdf_filter_wrong_content)
+    assert len(results) == 0, "Should find no PDF containing 'sovereign immunity'"
+
+def test_search_engine_regex_search_with_filter(search_engine_with_docs):
+    """Test regex search with metadata filtering."""
+    # Filter for only PDF documents, find chapter number
+    pdf_filter = {"type": "pdf"}
+    results = search_engine_with_docs.regex_search(r"chapter\s+\d+", filter=pdf_filter)
+    assert len(results) == 1
+    assert results[0].metadata["type"] == "pdf"
+
+    # Filter for only TXT documents, find statute number
+    txt_filter = {"type": "txt"}
+    results = search_engine_with_docs.regex_search(r"statute\s+\d+\.\d+", filter=txt_filter)
+    assert len(results) == 1
+    assert results[0].metadata["type"] == "txt"
+
+    # Filter that finds nothing
+    no_match_filter = {"chapter": 40}
+    results = search_engine_with_docs.regex_search(r"statute", filter=no_match_filter)
+    assert len(results) == 0 
