@@ -16,3 +16,4 @@ tqdm>=4.66.1
 pytest-dotenv>=0.5.2
 langchain-community>=0.0.1 # Or specify a newer version if needed
 faiss-cpu>=1.7.4 # CPU version for FAISS 
+streamlit>=1.30.0 # For building the web UI 
