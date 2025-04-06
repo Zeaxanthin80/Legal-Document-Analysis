@@ -1,0 +1,39 @@
+# Test Questions for Legal Document Chatbot
+
+## Basic Section Queries
+1. What is Section 39.501 about?
+2. Can you explain Section 39.521?
+3. What does Section 39.395 cover?
+
+## Specific Content Queries
+4. What are the requirements for filing a petition under Section 39.501?
+5. What is the purpose of a dependency petition according to Section 39.501?
+6. What are the time limits for filing a dependency petition?
+
+## Cross-Section References
+7. How does Section 39.501 relate to Section 39.521?
+8. What are the differences between Sections 39.395 and 39.501?
+
+## Complex Queries
+9. What are the key provisions about dependency petitions in Chapter 39?
+10. Can you summarize the main sections about dependency proceedings?
+
+## Edge Cases
+11. What happens if a petition is filed without proper authorization?
+12. Are there any exceptions to the dependency petition requirements?
+
+## Purpose and Intent
+13. What is the overall purpose of the dependency petition system?
+14. How does the law prioritize child protection in dependency cases?
+
+## Procedural Questions
+15. What are the steps for filing a dependency petition?
+16. What documentation is required for a dependency petition?
+
+## Note: These questions test different aspects:
+- Direct section lookups
+- Content understanding
+- Cross-referencing
+- Complex reasoning
+- Procedural knowledge
+- Purpose and intent understanding 
