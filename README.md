@@ -1,14 +1,35 @@
 # Legal Document Analysis with LangChain
 
-This project provides a comprehensive solution for analyzing legal documents and Florida Statutes using LangChain and modern NLP techniques.
+This project provides a comprehensive solution for analyzing legal documents, specifically focused on Chapter 39, Florida Statutes, using LangChain and modern NLP techniques.
 
-## Features
+## Overview and Features
 
-- Document Processing: Load and preprocess legal documents from various formats (PDF, TXT, HTML)
-- Advanced Search: Implement full-text search, regex matching, and metadata filtering
-- Legal Analysis: Classify documents, identify legal topics, and extract key entities
-- Interactive Interface: CLI and chatbot interface for querying and summarizing statutes
-- Optional Database Integration: Store and index processed documents
+This project builds a **Legal Document Analysis Assistant** designed to make dense legal documents easier to understand and query. It combines document processing, vector search, AI-powered analysis, and user-friendly interfaces.
+
+**Core Components:**
+
+*   **Document Processing & Indexing:**
+    *   Ingests PDF legal documents (initially Chapter 39, FL Statutes).
+    *   Extracts text, splits it into manageable chunks, and generates vector embeddings.
+    *   Stores embeddings in a FAISS vector index (`data/processed/faiss_index`) for efficient semantic search (finding relevant text based on meaning).
+
+*   **Database Management (SQLite):**
+    *   Uses `data/processed/metadata.db` to track processed documents and analysis results.
+    *   `documents` table: Stores file paths, content hashes (to avoid reprocessing unchanged files), chunk counts, and indexing timestamps.
+    *   `analysis_results` table: Stores outputs (e.g., summaries, topic analyses) as JSON, linked to specific documents and analysis types.
+
+*   **AI-Powered Analysis:**
+    *   Leverages a `LegalClassifier` (using Large Language Models like OpenAI's) to perform analyses (e.g., summarization) on document chunks.
+    *   Stores generated analysis results in the database for later retrieval.
+
+*   **Chatbot (Retrieval-Augmented Generation - RAG):**
+    *   Provides a conversational interface for asking questions about the indexed documents.
+    *   Retrieves relevant text chunks from the FAISS index based on the question's meaning.
+    *   Sends the question and retrieved context to an LLM to generate answers grounded in the source document.
+
+*   **User Interfaces:**
+    *   **Command-Line Interface (CLI):** (`src.interface.cli`) For backend tasks: loading documents (`load`) and running analyses (`analyze <file> --type <type>`).
+    *   **Streamlit Web Application:** (`src.interface.app`) Provides a user-friendly chat interface and allows viewing stored analysis results.
 
 ## Project Structure
 

@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import hashlib
 import logging
+from typing import List, Tuple, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -194,6 +195,41 @@ class DatabaseManager:
     def __del__(self):
         """Ensure connection is closed when the object is destroyed."""
         self.close()
+
+    def get_all_documents(self) -> List[Tuple[int, str]]:
+        """Retrieves the ID and path of all documents in the database."""
+        query = "SELECT doc_id, file_path FROM documents ORDER BY file_path;"
+        try:
+            self.cursor.execute(query)
+            results = self.cursor.fetchall()
+            return results if results else []
+        except sqlite3.Error as e:
+            logging.error(f"Error fetching all documents: {e}")
+            return []
+
+    def get_analysis_types_for_doc(self, doc_id: int) -> List[str]:
+        """Retrieves distinct analysis types available for a given document ID."""
+        query = "SELECT DISTINCT analysis_type FROM analysis_results WHERE doc_id = ? ORDER BY analysis_type;"
+        params = (doc_id,)
+        try:
+            self.cursor.execute(query, params)
+            results = self.cursor.fetchall()
+            return [row[0] for row in results] if results else []
+        except sqlite3.Error as e:
+            logging.error(f"Error fetching analysis types for doc_id {doc_id}: {e}")
+            return []
+
+    def get_analysis_result(self, doc_id: int, analysis_type: str) -> Optional[str]:
+        """Retrieves the stored JSON result for a specific document and analysis type."""
+        query = "SELECT result_content FROM analysis_results WHERE doc_id = ? AND analysis_type = ?;"
+        params = (doc_id, analysis_type)
+        try:
+            self.cursor.execute(query, params)
+            result = self.cursor.fetchone()
+            return result[0] if result else None
+        except sqlite3.Error as e:
+            logging.error(f"Error fetching analysis result for doc_id {doc_id}, type {analysis_type}: {e}")
+            return None
 
 # Helper function for hashing files
 def calculate_file_hash(file_path: str | Path) -> str:
