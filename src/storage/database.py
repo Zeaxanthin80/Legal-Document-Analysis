@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import hashlib
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -16,25 +16,25 @@ class DatabaseManager:
     """Manages interactions with the SQLite database for storing document metadata and analysis results."""
 
     def __init__(self, db_path: str | Path = DEFAULT_DB_PATH):
-        """
-        Initializes the DatabaseManager and connects to the SQLite database.
-        Creates necessary directories and tables if they don't exist.
-
-        Args:
-            db_path: The path to the SQLite database file.
-        """
+        """Initialize the DatabaseManager. Connection is established in connect()."""
         self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True) # Ensure directory exists
         self.conn = None
         self.cursor = None
-        try:
-            self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
-            self.cursor = self.conn.cursor()
-            logging.info(f"Connected to database: {self.db_path.resolve()}")
-            self._create_tables()
-        except sqlite3.Error as e:
-            logging.error(f"Database connection error to {self.db_path}: {e}")
-            raise # Re-raise the exception after logging
+        # Ensure directory exists on init
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def connect(self):
+        """Establishes the database connection."""
+        if self.conn is None:
+            try:
+                self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES, check_same_thread=False) # Allow cross-thread use IF CAREFUL
+                # OR: self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) # Default, safer
+                self.cursor = self.conn.cursor()
+                logging.debug(f"Connected to database: {self.db_path.resolve()}")
+                self._create_tables()
+            except sqlite3.Error as e:
+                logging.error(f"Database connection error to {self.db_path}: {e}")
+                raise
 
     def _create_tables(self):
         """Creates the necessary tables if they do not already exist."""
@@ -61,6 +61,23 @@ class DatabaseManager:
                     FOREIGN KEY (doc_id) REFERENCES documents (doc_id)
                 )
             """)
+
+            # chat_history table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat_history (
+                    message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    role TEXT NOT NULL, -- 'user' or 'assistant'
+                    content TEXT NOT NULL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # index for faster session retrieval
+            self.cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_chat_session_ts ON chat_history (session_id, timestamp);
+            """)
+
             self.conn.commit()
             logging.info("Database tables verified/created successfully.")
         except sqlite3.Error as e:
@@ -177,24 +194,37 @@ class DatabaseManager:
 
     def close(self):
         """Closes the database connection if it's open."""
+        if self.cursor:
+            try:
+                self.cursor.close()
+            except sqlite3.Error as e:
+                 logging.debug(f"Error closing cursor: {e}")
+            finally:
+                self.cursor = None
         if self.conn:
             try:
-                self.conn.commit() # Ensure any pending changes are saved
+                # Commit before close might be needed depending on workflow
+                # self.conn.commit() # Be careful with auto-commit
+                self.conn.close()
+                logging.debug("Database connection closed.")
             except sqlite3.Error as e:
-                 # Log error if commit fails (e.g., connection already closed)
-                 logging.debug(f"Could not commit changes on close: {e}")
+                logging.debug(f"Error closing connection: {e}")
             finally:
-                 try:
-                      self.conn.close()
-                      self.conn = None # Set to None after closing
-                      logging.info("Database connection closed.")
-                 except sqlite3.Error as e:
-                      logging.debug(f"Error during explicit close: {e}")
-                      self.conn = None # Ensure it's None even if close fails
+                self.conn = None
+
+    def __enter__(self):
+        """Enter the runtime context related to this object."""
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Exit the runtime context related to this object."""
+        self.close()
 
     def __del__(self):
-        """Ensure connection is closed when the object is destroyed."""
-        self.close()
+        # Optional: Still useful as a fallback
+        # self.close()
+        pass # Let __exit__ handle explicit closure
 
     def get_all_documents(self) -> List[Tuple[int, str]]:
         """Retrieves the ID and path of all documents in the database."""
@@ -230,6 +260,37 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logging.error(f"Error fetching analysis result for doc_id {doc_id}, type {analysis_type}: {e}")
             return None
+
+    def add_chat_message(self, session_id: str, role: str, content: str) -> Optional[int]:
+        """Adds a chat message to the history."""
+        query = "INSERT INTO chat_history (session_id, role, content) VALUES (?, ?, ?);"
+        params = (session_id, role, content)
+        try:
+            self.cursor.execute(query, params)
+            self.conn.commit()
+            message_id = self.cursor.lastrowid
+            logging.debug(f"Added chat message id={message_id} for session={session_id}")
+            return message_id
+        except sqlite3.Error as e:
+            logging.error(f"Error adding chat message for session {session_id}: {e}")
+            self.conn.rollback() # Rollback on error
+            return None
+
+    def get_chat_history(self, session_id: str) -> List[Dict[str, str]]:
+        """Retrieves chat history for a given session ID, ordered by timestamp."""
+        query = "SELECT role, content FROM chat_history WHERE session_id = ? ORDER BY timestamp ASC;"
+        params = (session_id,)
+        history = []
+        try:
+            self.cursor.execute(query, params)
+            results = self.cursor.fetchall()
+            for row in results:
+                history.append({"role": row[0], "content": row[1]})
+            logging.debug(f"Retrieved {len(history)} messages for session {session_id}")
+            return history
+        except sqlite3.Error as e:
+            logging.error(f"Error fetching chat history for session {session_id}: {e}")
+            return [] # Return empty list on error
 
 # Helper function for hashing files
 def calculate_file_hash(file_path: str | Path) -> str:
