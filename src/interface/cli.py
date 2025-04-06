@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import json
+import logging # Import logging
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
@@ -11,8 +12,12 @@ load_dotenv()
 from ..document_processing.loader import DocumentLoader
 from ..search.engine import SearchEngine
 from ..analysis.classifier import LegalClassifier
+from ..storage.database import DatabaseManager, calculate_file_hash # Import DB components
 
 INDEX_PATH = "faiss_index" # Define index path constant
+
+# Configure logging (if not already configured elsewhere)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class LegalAnalysisCLI:
     """Command-line interface for legal document analysis."""
@@ -23,14 +28,76 @@ class LegalAnalysisCLI:
         # Pass the index path to the SearchEngine
         self.search_engine = SearchEngine(index_path=INDEX_PATH)
         self.classifier = LegalClassifier()
+        self.db_manager = DatabaseManager() # Initialize DatabaseManager
         
     def load_documents(self, directory: str) -> None:
-        """Load documents from a directory."""
-        print(f"Loading documents from {directory}...")
-        documents = self.loader.load_documents(directory)
-        self.search_engine.add_documents(documents)
-        print(f"Loaded {len(documents)} documents.")
-        
+        """Load documents from a directory, checking the database to avoid reprocessing."""
+        logging.info(f"Starting document loading process for directory: {directory}")
+        source_dir = Path(directory)
+        if not source_dir.is_dir():
+            logging.error(f"Source directory not found: {directory}")
+            return
+
+        processed_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        # Iterate through potential document files (e.g., PDFs)
+        # Adjust the glob pattern if other document types are supported
+        for file_path in source_dir.glob('*.pdf'): 
+            relative_path_str = str(file_path.relative_to(source_dir.parent)) # Store path relative to project/data root
+            logging.info(f"Checking file: {relative_path_str}")
+
+            try:
+                file_hash = calculate_file_hash(file_path)
+                if not file_hash:
+                    logging.warning(f"Could not calculate hash for {relative_path_str}, skipping.")
+                    error_count += 1
+                    continue
+
+                # Check if document is already processed and unchanged
+                if self.db_manager.check_document_processed(relative_path_str, file_hash):
+                    logging.info(f"Skipping already processed and unchanged file: {relative_path_str}")
+                    skipped_count += 1
+                    continue
+
+                # If not skipped, process the document
+                logging.info(f"Processing file: {relative_path_str}")
+                # Use the specific load_pdf method from DocumentLoader
+                document_chunks = self.loader.load_pdf(str(file_path))
+                
+                if not document_chunks:
+                    logging.warning(f"No chunks generated for {relative_path_str}, skipping indexing.")
+                    error_count += 1
+                    continue
+                
+                num_chunks = len(document_chunks)
+                logging.info(f"Generated {num_chunks} chunks for {relative_path_str}. Adding to index...")
+                
+                # Add chunks to the search engine (FAISS index)
+                self.search_engine.add_documents(document_chunks)
+                logging.info(f"Successfully added chunks from {relative_path_str} to the index.")
+
+                # Add record to the database after successful indexing
+                doc_id = self.db_manager.add_document(relative_path_str, file_hash, num_chunks)
+                if doc_id is None:
+                     logging.error(f"Failed to add document record to database for {relative_path_str}")
+                     # Decide if you want to treat this as a fatal error or just log it
+                     error_count += 1
+                else:
+                     logging.info(f"Successfully added document record (doc_id={doc_id}) for {relative_path_str}")
+                     processed_count += 1
+
+            except Exception as e:
+                logging.error(f"Error processing file {relative_path_str}: {e}", exc_info=True)
+                error_count += 1
+
+        logging.info("Document loading process finished.")
+        print(f"\nLoad Summary:")
+        print(f"  - Successfully processed and indexed: {processed_count} files")
+        print(f"  - Skipped (already processed, unchanged): {skipped_count} files")
+        print(f"  - Errors encountered: {error_count} files")
+
     def search_documents(self, 
                          query: str, 
                          search_type: str = "semantic", 
@@ -55,34 +122,82 @@ class LegalAnalysisCLI:
             
         self._display_results(results)
         
-    def analyze_documents(self, directory: str, limit: int = 5) -> None:
-        """Analyze documents in a directory (first few by default)."""
-        print(f"Loading documents from {directory} for analysis...")
-        documents = self.loader.load_documents(directory)
-        
-        if not documents:
-            print("No documents found to analyze.")
+    def analyze_document(self, file_path_str: str, analysis_type: str) -> None:
+        """Analyze a single document and store results in the database."""
+        logging.info(f"Starting analysis for document: {file_path_str}, type: {analysis_type}")
+        file_path = Path(file_path_str)
+
+        if not file_path.is_file():
+            logging.error(f"Document file not found: {file_path_str}")
+            print(f"Error: File not found at '{file_path_str}'")
             return
 
-        # Limit the number of documents to analyze
-        docs_to_analyze = documents[:limit]
-        print(f"Analyzing the first {len(docs_to_analyze)} document chunks (out of {len(documents)} total)... This may take a while.")
-        
-        # Analyze the limited subset
-        results = self.classifier.analyze_documents(docs_to_analyze)
-        
-        # Save results to file
-        output_file = Path(directory) / "analysis_results.json"
-        # Ensure parent directory exists (useful if directory is like data/raw)
-        output_file.parent.mkdir(parents=True, exist_ok=True) 
+        # Convert to relative path if needed (assuming input might be relative to project root or data)
+        # This needs to match how paths are stored in the DB during load
         try:
-            with open(output_file, "w", encoding='utf-8') as f:
-                # Ensure JSON can handle potential non-serializable data gracefully
-                json.dump(results, f, indent=2, default=str, ensure_ascii=False)
-            print(f"Analysis results for the first {len(docs_to_analyze)} chunks saved to {output_file}")
-        except Exception as e:
-            print(f"Error saving analysis results to {output_file}: {e}")
+            # If the path starts with 'data/', use it as is
+            if file_path_str.startswith('data/'):
+                relative_path_str = file_path_str
+            else:
+                # Otherwise, try to make it relative to the data directory
+                data_dir = Path('data')
+                relative_path = file_path.relative_to(data_dir.parent)
+                relative_path_str = str(relative_path).replace('\\', '/')
+        except ValueError:
+            # If not relative to project root, assume it's already the correct relative path format
+            relative_path_str = file_path_str.replace('\\', '/') 
         
+        logging.info(f"Using relative path for DB lookup: {relative_path_str}")
+
+        # 1. Get the doc_id from the database
+        doc_id = self.db_manager.get_doc_id_by_path(relative_path_str)
+        if doc_id is None:
+            logging.error(f"Document '{relative_path_str}' not found in the database. Please load it first using the 'load' command.")
+            print(f"Error: Document '{relative_path_str}' has not been loaded/indexed yet.")
+            return
+
+        logging.info(f"Found document in database (doc_id={doc_id}). Loading chunks...")
+
+        # 2. Load document chunks (using the original, potentially absolute path)
+        try:
+            # Assuming load_pdf handles loading a single file
+            document_chunks = self.loader.load_pdf(str(file_path)) 
+            if not document_chunks:
+                logging.error(f"No chunks generated for document: {file_path_str}")
+                print(f"Error: Could not load or chunk document '{file_path_str}'.")
+                return
+            logging.info(f"Loaded {len(document_chunks)} chunks for analysis.")
+        except Exception as e:
+            logging.error(f"Error loading/chunking document {file_path_str}: {e}", exc_info=True)
+            print(f"Error loading document: {e}")
+            return
+
+        # 3. Perform the analysis (assuming classifier handles a list of chunks)
+        # TODO: Adapt this based on how LegalClassifier actually works!
+        #       Does it need a specific analysis type passed? Does it return different structures?
+        logging.info(f"Performing '{analysis_type}' analysis on {len(document_chunks)} chunks... This may take time.")
+        try:
+            # We might need to adapt the classifier call based on the 'analysis_type'
+            # For now, assume analyze_documents performs a default analysis
+            analysis_result = self.classifier.analyze_documents(document_chunks) 
+            if not analysis_result:
+                 logging.warning(f"Analysis returned no result for doc_id={doc_id}, type='{analysis_type}'")
+                 print("Analysis did not produce a result.")
+                 return # Or handle differently?
+            logging.info(f"Analysis complete for doc_id={doc_id}, type='{analysis_type}'")
+        except Exception as e:
+            logging.error(f"Error during analysis for doc_id={doc_id}, type='{analysis_type}': {e}", exc_info=True)
+            print(f"Error during analysis: {e}")
+            return
+
+        # 4. Store the result in the database
+        result_id = self.db_manager.add_analysis_result(doc_id, analysis_type, analysis_result)
+        
+        if result_id:
+            print(f"Successfully stored '{analysis_type}' analysis result (result_id={result_id}) for document '{relative_path_str}' in the database.")
+        else:
+            print(f"Error: Failed to store analysis result for document '{relative_path_str}' in the database.")
+
     def _display_results(self, results: List[Any]) -> None:
         """Display search results."""
         if not results:
@@ -98,6 +213,12 @@ class LegalAnalysisCLI:
             if metadata_str:
                 print(f"Metadata: {metadata_str}")
             print(f"Content: {doc.page_content[:300]}...") # Show slightly more content
+
+    # Ensure db_manager is closed properly, maybe add a close method or rely on __del__
+    def __del__(self):
+        """Ensure database connection is closed when CLI object is destroyed."""
+        if hasattr(self, 'db_manager') and self.db_manager:
+            self.db_manager.close()
 
 def parse_filters(filter_args: List[str]) -> Optional[Dict[str, Any]]:
     """Parse a list of 'key=value' strings into a dictionary."""
@@ -129,12 +250,13 @@ def main():
     search_parser.add_argument("--filter", action='append', 
                              help="Metadata filter in key=value format (can be used multiple times)")
     
-    # Analyze documents command
-    analyze_parser = subparsers.add_parser("analyze", help="Analyze documents in a directory (loads them fresh, does not use index)")
-    analyze_parser.add_argument("directory", help="Directory containing documents")
-    # Add optional limit argument
-    analyze_parser.add_argument("--limit", type=int, default=5, 
-                              help="Limit the number of document chunks to analyze (default: 5)")
+    # Analyze single document command
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze a single document and store results in the database")
+    analyze_parser.add_argument("file_path", help="Path to the document file (relative to project root or data dir)")
+    analyze_parser.add_argument("--type", required=True, 
+                              choices=["topic", "summary", "classification"], # Add more types as needed
+                              help="Type of analysis to perform")
+    # Remove the --limit argument as we process one file
     
     args = parser.parse_args()
         
@@ -146,8 +268,8 @@ def main():
         filters = parse_filters(args.filter or []) 
         cli.search_documents(args.query, args.type, filters)
     elif args.command == "analyze":
-        # Pass the limit to the analyze_documents method
-        cli.analyze_documents(args.directory, args.limit)
+        # Pass the file path and analysis type
+        cli.analyze_document(args.file_path, args.type)
         
 if __name__ == "__main__":
     main() 
