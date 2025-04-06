@@ -132,28 +132,28 @@ class LegalAnalysisCLI:
             print(f"Error: File not found at '{file_path_str}'")
             return
 
-        # Convert to relative path if needed (assuming input might be relative to project root or data)
-        # This needs to match how paths are stored in the DB during load
+        # Convert to relative path if needed
         try:
-            # If the path starts with 'data/', use it as is
+            # Handle paths that might start with 'data/'
             if file_path_str.startswith('data/'):
-                relative_path_str = file_path_str
+                relative_path_str = file_path_str[5:]  # Remove 'data/' prefix
             else:
-                # Otherwise, try to make it relative to the data directory
-                data_dir = Path('data')
-                relative_path = file_path.relative_to(data_dir.parent)
-                relative_path_str = str(relative_path).replace('\\', '/')
+                relative_path_str = file_path_str
+            
+            # Convert forward slashes to backslashes to match database storage
+            relative_path_str = relative_path_str.replace('/', '\\')
+            
+            logging.info(f"Using relative path for DB lookup: {relative_path_str}")
         except ValueError:
-            # If not relative to project root, assume it's already the correct relative path format
-            relative_path_str = file_path_str.replace('\\', '/') 
-        
-        logging.info(f"Using relative path for DB lookup: {relative_path_str}")
+            logging.error(f"Could not determine relative path for: {file_path_str}")
+            print(f"Error: Invalid file path format: {file_path_str}")
+            return
 
-        # 1. Get the doc_id from the database
+        # Get the doc_id from the database
         doc_id = self.db_manager.get_doc_id_by_path(relative_path_str)
         if doc_id is None:
             logging.error(f"Document '{relative_path_str}' not found in the database. Please load it first using the 'load' command.")
-            print(f"Error: Document '{relative_path_str}' has not been loaded/indexed yet.")
+            print(f"Error: Document '{file_path_str}' has not been loaded/indexed yet.")
             return
 
         logging.info(f"Found document in database (doc_id={doc_id}). Loading chunks...")
